@@ -1,99 +1,99 @@
 #!/usr/bin/env node
 
-import {
-  cleanComments,
-  cleanDocs,
-  clearPackageJSON,
-  copyFiles,
-  createFilesFilter,
-  createTempDirectory,
-  publish,
-  readPackageJSON,
-  removeTempDirectory,
-  runScript,
-  writePackageJSON
-} from './core.js'
+import process from 'node:process'
+import { cleanComments, cleanDocs, clearPackageJSON, copyFiles, createFilesFilter, createTempDirectory, publish, readPackageJSON, removeTempDirectory, runScript, writePackageJSON } from './core.js'
 import { getConfig } from './get-config.js'
 import { parseListArg } from './utils.js'
 
-const HELP =
-  'npx clean-publish\n' +
-  '\n' +
-  'Options:\n' +
-  '  --help             Show help\n' +
-  '  --version          Show version number\n' +
-  '  --clean-docs       Keep only main section of README.md' +
-  '  --clean-comments   Clean inline comments from JS files' +
-  '  --files            One or more exclude files\n' +
-  '  --fields           One or more exclude package.json fields\n' +
-  '  --without-publish  Clean package without npm publish\n' +
-  '  --dry-run          Reports the details of what would have been published\n' +
-  '  --package-manager  Package manager to use\n' +
-  '  --access           Whether the npm registry publishes this package\n' +
-  '                     as a public package, or restricted\n' +
-  '  --tag              Registers the package with the given tag\n' +
-  '  --before-script    Run script on the to-release dir before npm\n' +
-  '                     publish\n' +
-  '  --temp-dir         Create temporary directory with given name\n' +
-  '  --                 Pass next arguments as package manager options'
+const HELP = 'npx clean-publish\n'
+  + '\n'
+  + 'Options:\n'
+  + '  --help             Show help\n'
+  + '  --version          Show version number\n'
+  + '  --clean-docs       Keep only main section of README.md'
+  + '  --clean-comments   Clean inline comments from JS files'
+  + '  --files            One or more exclude files\n'
+  + '  --fields           One or more exclude package.json fields\n'
+  + '  --without-publish  Clean package without npm publish\n'
+  + '  --dry-run          Reports the details of what would have been published\n'
+  + '  --package-manager  Package manager to use\n'
+  + '  --access           Whether the npm registry publishes this package\n'
+  + '                     as a public package, or restricted\n'
+  + '  --tag              Registers the package with the given tag\n'
+  + '  --before-script    Run script on the to-release dir before npm\n'
+  + '                     publish\n'
+  + '  --temp-dir         Create temporary directory with given name\n'
+  + '  --                 Pass next arguments as package manager options'
 
 const DEFAULT_OPTIONS = {
-  packageManager: 'npm'
+  packageManager: 'npm',
 }
 
 async function handleOptions() {
-  let options = {}
+  const options = {}
   for (let i = 2; i < process.argv.length; i++) {
     if (process.argv[i] === '--help') {
-      process.stdout.write(HELP + '\n')
+      process.stdout.write(`${HELP}\n`)
       process.exit(0)
-    } else if (process.argv[i] === '--version') {
-      process.stdout.write(require('./package.json').version + '\n')
+    }
+    else if (process.argv[i] === '--version') {
+      process.stdout.write(`${require('./package.json').version}\n`)
       process.exit(0)
-    } else if (process.argv[i] === '--without-publish') {
+    }
+    else if (process.argv[i] === '--without-publish') {
       options.withoutPublish = true
-    } else if (process.argv[i] === '--dry-run') {
+    }
+    else if (process.argv[i] === '--dry-run') {
       options.dryRun = true
-      i += 1
-    } else if (process.argv[i] === '--package-manager') {
-      options.packageManager = process.argv[i + 1]
-      i += 1
-    } else if (process.argv[i] === '--before-script') {
-      options.beforeScript = process.argv[i + 1]
-      i += 1
-    } else if (process.argv[i] === '--access') {
-      options.access = process.argv[i + 1]
-      i += 1
-    } else if (process.argv[i] === '--files') {
-      options.files = parseListArg(process.argv[i + 1])
-      i += 1
-    } else if (process.argv[i] === '--clean-docs') {
+    }
+    else if (process.argv[i] === '--clean-docs') {
       options.cleanDocs = true
-      i += 1
-    } else if (process.argv[i] === '--clean-comments') {
+    }
+    else if (process.argv[i] === '--clean-comments') {
       options.cleanComments = true
-      i += 1
-    } else if (process.argv[i] === '--tag') {
-      options.tag = process.argv[i + 1]
-      i += 1
-    } else if (process.argv[i] === '--fields') {
+    }
+    else if (process.argv[i] === '--package-manager') {
+      options.packageManager = process.argv[i + 1]
+      i++
+    }
+    else if (process.argv[i] === '--before-script') {
+      options.beforeScript = process.argv[i + 1]
+      i++
+    }
+    else if (process.argv[i] === '--access') {
+      options.access = process.argv[i + 1]
+      i++
+    }
+    else if (process.argv[i] === '--files') {
+      options.files = parseListArg(process.argv[i + 1])
+      i++
+    }
+    else if (process.argv[i] === '--fields') {
       options.fields = parseListArg(process.argv[i + 1])
-      i += 1
-    } else if (process.argv[i] === '--temp-dir') {
+      i++
+    }
+    else if (process.argv[i] === '--tag') {
+      options.tag = process.argv[i + 1]
+      i++
+    }
+    else if (process.argv[i] === '--temp-dir') {
       options.tempDir = process.argv[i + 1]
-      i += 1
-    } else if (process.argv[i] === '--') {
+      i++
+    }
+    else if (process.argv[i] === '--') {
       options.packageManagerOptions = process.argv.slice(i + 1)
       break
-    } else {
+    }
+    else {
       options._ = process.argv[i]
     }
   }
-  if (!options._) {
-    let config = await getConfig()
-    return { ...DEFAULT_OPTIONS, ...config, ...options }
-  } else {
+  if (options._) {
     return options
+  }
+  else {
+    const config = await getConfig()
+    return { ...DEFAULT_OPTIONS, ...config, ...options }
   }
 }
 
@@ -119,10 +119,7 @@ async function run() {
   const cleanPackageJSON = clearPackageJSON(packageJson, options.fields)
   await writePackageJSON(tempDirectoryName, cleanPackageJSON)
 
-  let prepublishSuccess = true
-  if (options.beforeScript) {
-    prepublishSuccess = await runScript(options.beforeScript, tempDirectoryName)
-  }
+  const prepublishSuccess = options.beforeScript ? await runScript(options.beforeScript, tempDirectoryName) : true
 
   if (!options.withoutPublish && prepublishSuccess) {
     await publish(tempDirectoryName, options)
@@ -133,7 +130,7 @@ async function run() {
   }
 }
 
-run().catch(error => {
-  process.stderr.write(error.stack + '\n')
+run().catch((error) => {
+  process.stderr.write(`${error.stack}\n`)
   process.exit(1)
 })

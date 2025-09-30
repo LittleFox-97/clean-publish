@@ -1,4 +1,5 @@
 import { cp, readFile, rm, writeFile } from 'node:fs/promises'
+import process from 'node:process'
 
 export async function remove(dir) {
   await rm(dir, { force: true, recursive: true })
@@ -9,12 +10,12 @@ export async function copy(from, to, opts) {
 }
 
 export async function readJSON(file) {
-  let data = await readFile(file)
+  const data = await readFile(file)
   return JSON.parse(data.toString())
 }
 
 export async function writeJSON(file, json) {
-  await writeFile(file, JSON.stringify(json, null, '  ') + '\n')
+  await writeFile(file, `${JSON.stringify(json, null, '  ')}\n`)
 }
 
 export function readJSONFromStdin() {
@@ -32,7 +33,8 @@ export function readJSONFromStdin() {
         try {
           const json = JSON.parse(jsonString)
           resolve(json)
-        } catch (error) {
+        }
+        catch (error) {
           reject(error)
         }
       })
@@ -49,7 +51,7 @@ export function isObject(object) {
 }
 
 export function filterObjectByKey(object, filterByKey = () => true, deep) {
-  let result = {}
+  const result = {}
   let changed = false
 
   for (const key in object) {
@@ -60,10 +62,12 @@ export function filterObjectByKey(object, filterByKey = () => true, deep) {
         if (result[key] !== object[key]) {
           changed = true
         }
-      } else {
+      }
+      else {
         result[key] = object[key]
       }
-    } else {
+    }
+    else {
       changed = true
     }
   }
@@ -71,23 +75,23 @@ export function filterObjectByKey(object, filterByKey = () => true, deep) {
   return changed ? result : object
 }
 
-const RE_PATH = /(?<!\\)\./;
+const RE_PATH = /(?<!\\)\./
 export function pathToKeys(path) {
-  return path.split(RE_PATH).map((s) => s.replace('\\.', '.'));
+  return path.split(RE_PATH).map(s => s.replace('\\.', '.'))
 }
 
 export function deleteProperty(object, keys) {
   if (!isObject(object)) {
-    return false;
+    return false
   }
 
-  const key = keys.shift();
+  const key = keys.shift()
   if (key === undefined) {
-    return false;
+    return false
   }
 
   if (keys.length === 0) {
-    return delete object[key];
+    return delete object[key]
   }
 
   return deleteProperty(object[key], keys)

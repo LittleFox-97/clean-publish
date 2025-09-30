@@ -1,8 +1,8 @@
+import { promises as fs } from 'node:fs'
+import { basename, join } from 'node:path'
 import spawn from 'cross-spawn'
 import glob from 'fast-glob'
 import micromatch from 'micromatch'
-import { promises as fs } from 'node:fs'
-import { basename, join } from 'node:path'
 
 import IGNORE_FIELDS from './exception/ignore-fields.js'
 import IGNORE_FILES from './exception/ignore-files.js'
@@ -15,7 +15,7 @@ import {
   pathToKeys,
   readJSON,
   remove,
-  writeJSON
+  writeJSON,
 } from './utils.js'
 
 // https://pnpm.io/package_json#publishconfig
@@ -33,7 +33,7 @@ const PUBLISH_CONFIG_FIELDS = [
   'umd:main',
   'typesVersions',
   'cpu',
-  'os'
+  'os',
 ]
 
 export function readPackageJSON() {
@@ -50,10 +50,10 @@ function applyPublishConfig(packageJson) {
   }
 
   const publishConfig = {
-    ...packageJson.publishConfig
+    ...packageJson.publishConfig,
   }
 
-  PUBLISH_CONFIG_FIELDS.forEach(field => {
+  PUBLISH_CONFIG_FIELDS.forEach((field) => {
     if (publishConfig[field]) {
       packageJson[field] = publishConfig[field]
       delete publishConfig[field]
@@ -62,7 +62,7 @@ function applyPublishConfig(packageJson) {
 
   if (!Object.keys(publishConfig).length) {
     // delete property by destructuring
-    // eslint-disable-next-line no-unused-vars
+
     const { publishConfig: _, ...pkg } = packageJson
 
     return pkg
@@ -70,7 +70,7 @@ function applyPublishConfig(packageJson) {
 
   return {
     ...packageJson,
-    publishConfig
+    publishConfig,
   }
 }
 
@@ -82,17 +82,16 @@ export function clearPackageJSON(packageJson, inputIgnoreFields) {
   const cleanPackageJSON = structuredClone(applyPublishConfig(packageJson))
   ignoreFields.forEach(
     field =>
-      deleteProperty(cleanPackageJSON, pathToKeys(field))
+      deleteProperty(cleanPackageJSON, pathToKeys(field)),
   )
 
   if (packageJson.scripts && !ignoreFields.includes('scripts')) {
     cleanPackageJSON.scripts = filterObjectByKey(packageJson.scripts, script =>
-      NPM_SCRIPTS.includes(script)
-    )
+      NPM_SCRIPTS.includes(script))
 
     if (
-      cleanPackageJSON.scripts.publish &&
-      /^clean-publish( |$)/.test(cleanPackageJSON.scripts.publish)
+      cleanPackageJSON.scripts.publish
+      && /^clean-publish(?: |$)/.test(cleanPackageJSON.scripts.publish)
     ) {
       // "custom" publish script is actually calling clean-publish
       delete cleanPackageJSON.scripts.publish
@@ -101,8 +100,8 @@ export function clearPackageJSON(packageJson, inputIgnoreFields) {
 
   for (const i in cleanPackageJSON) {
     if (
-      isObject(cleanPackageJSON[i]) &&
-      Object.keys(cleanPackageJSON[i]).length === 0
+      isObject(cleanPackageJSON[i])
+      && Object.keys(cleanPackageJSON[i]).length === 0
     ) {
       delete cleanPackageJSON[i]
     }
@@ -139,7 +138,7 @@ export function createFilesFilter(ignoreFiles) {
       ignoreMatcher(filename, path) && next(filename, path)
   }, null)
 
-  return path => {
+  return (path) => {
     const filename = basename(path)
 
     return filter(filename, path)
@@ -150,31 +149,34 @@ export async function copyFiles(tempDir, filter) {
   const rootFiles = await fs.readdir('./')
 
   return Promise.all(
-    rootFiles.map(async file => {
+    rootFiles.map(async (file) => {
       if (file !== tempDir) {
         await copy(file, join(tempDir, file), { filter })
       }
-    })
+    }),
   )
 }
 
 export function publish(
   cwd,
-  { access, dryRun, packageManager, packageManagerOptions = [], tag }
+  { access, dryRun, packageManager, packageManagerOptions = [], tag },
 ) {
   return new Promise((resolve, reject) => {
     const args = ['publish', ...packageManagerOptions]
-    if (access) args.push('--access', access)
-    if (tag) args.push('--tag', tag)
-    if (dryRun) args.push('--dry-run')
+    if (access)
+      args.push('--access', access)
+    if (tag)
+      args.push('--tag', tag)
+    if (dryRun)
+      args.push('--dry-run')
     spawn(packageManager, args, {
       cwd,
-      stdio: 'inherit'
+      stdio: 'inherit',
     })
       .on('close', (code, signal) => {
         resolve({
           code,
-          signal
+          signal,
         })
       })
       .on('error', reject)
@@ -185,7 +187,8 @@ export async function createTempDirectory(name) {
   if (name) {
     try {
       await fs.mkdir(name)
-    } catch (err) {
+    }
+    catch (err) {
       if (err.code === 'EEXIST') {
         throw new Error(`Temporary directory "${name}" already exists.`)
       }
@@ -204,7 +207,7 @@ export function removeTempDirectory(directoryName) {
 export function runScript(script, ...args) {
   return new Promise((resolve, reject) => {
     spawn(script, args, { stdio: 'inherit' })
-      .on('close', code => {
+      .on('close', (code) => {
         resolve(code === 0)
       })
       .on('error', reject)
@@ -221,32 +224,32 @@ export function getReadmeUrlFromRepository(repository) {
   return null
 }
 
-export async function cleanDocs(drectoryName, repository, homepage) {
-  const readmePath = join(drectoryName, 'README.md')
+export async function cleanDocs(directoryName, repository, homepage) {
+  const readmePath = join(directoryName, 'README.md')
   const readme = await fs.readFile(readmePath)
   const readmeUrl = getReadmeUrlFromRepository(repository)
   if (homepage || readmeUrl) {
-    const cleaned =
-      readme.toString().split(/\n##\s*\w/m)[0] +
-      '\n## Docs\n' +
-      `Read full docs **[here](${homepage || readmeUrl})**.\n`
+    const cleaned
+      = `${readme.toString().split(/\n##\s*\w/)[0]
+      }\n## Docs\n`
+      + `Read full docs **[here](${homepage || readmeUrl})**.\n`
     await fs.writeFile(readmePath, cleaned)
   }
 }
 
-export async function cleanComments(drectoryName) {
-  const files = await glob(['**/*.js'], { cwd: drectoryName })
+export async function cleanComments(directoryName) {
+  const files = await glob(['**/*.js'], { cwd: directoryName })
   await Promise.all(
-    files.map(async i => {
-      const file = join(drectoryName, i)
+    files.map(async (i) => {
+      const file = join(directoryName, i)
       const content = await fs.readFile(file)
       const cleaned = content
         .toString()
-        .replace(/\s*\/\/.*\n/gm, '\n')
-        .replace(/\s*\/\*[^/]+\*\/\n?/gm, '\n')
-        .replace(/\n+/gm, '\n')
+        .replace(/\s*\/\/.*\n/g, '\n')
+        .replace(/\s*\/\*[^/]+\*\/\n?/g, '\n')
+        .replace(/\n+/g, '\n')
         .replace(/^\n+/gm, '')
       await fs.writeFile(file, cleaned)
-    })
+    }),
   )
 }

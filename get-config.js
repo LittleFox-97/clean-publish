@@ -3,74 +3,58 @@
  * https://github.com/ai/size-limit/blob/master/cli.js
  */
 
-import { lilconfig } from 'lilconfig'
 import { relative } from 'node:path'
-
+import process from 'node:process'
+import { lilconfig } from 'lilconfig'
 import { isObject } from './utils.js'
 
 const PACKAGE_ERRORS = {
   empty: 'The `"clean-publish"` section of package.json must `not be empty`',
   fieldsNotStrings:
-    'The `fields` in the `"clean-publish"` section ' +
-    'of package.json must be `an array of strings`',
+    'The `fields` in the `"clean-publish"` section '
+    + 'of package.json must be `an array of strings`',
   filesNotStringsOrRegExps:
-    'The `files` in the `"clean-publish"` section ' +
-    'of package.json must be ' +
-    '`an array of strings or RegExps`',
+    `The \`files\` in the \`"clean-publish"\` section of package.json must be \`an array of strings or RegExps\``,
   notObject:
-    'The `"clean-publish"` section of package.json ' + 'must be `an object`',
+    'The `"clean-publish"` section of package.json must be `an object`',
   packageManagerNotString:
-    'The `packageManager` in the `"clean-publish"` section ' +
-    'of package.json must be `an string`',
+    `The \`packageManager\` in the \`"clean-publish"\` section of package.json must be \`an string\``,
   packageManagerOptionsNotStrings:
-    'The `packageManagerOptions` in the `"clean-publish"` section ' +
-    'of package.json must be `an array of strings`',
+    'The `packageManagerOptions` in the `"clean-publish"` section of package.json must be `an array of strings`',
   tempDirNotString:
-    'The `tempDir` in the `"clean-publish"` section ' +
-    'of package.json must be `an string`'
+    'The `tempDir` in the `"clean-publish"` section of package.json must be `an string`',
 }
 const FILE_ERRORS = {
   empty: 'Clean Publish config must `not be empty`',
   fieldsNotStrings:
-    'The `fields` in Clean Publish config ' + 'must be `an array of strings`',
+    'The `fields` in Clean Publish config must be `an array of strings`',
   filesNotStringsOrRegExps:
-    'The `files` in the Clean Publish config ' +
-    'must be `an array of strings or RegExps`',
+    'The `files` in the Clean Publish config must be `an array of strings or RegExps`',
   notObject: 'Clean Publish config must contain `an object`',
   packageManagerNotString:
-    'The `packageManager` in Clean Publish config ' +
-    'must be `an string`',
+    'The `packageManager` in Clean Publish config must be `an string`',
   packageManagerOptionsNotStrings:
-    'The `packageManagerOptions` in Clean Publish config ' +
-    'must be `an array of strings`',
+    'The `packageManagerOptions` in Clean Publish config must be `an array of strings`',
   tempDirNotString:
-    'The `tempDir` in Clean Publish config ' + 'must be `an string`'
+    'The `tempDir` in Clean Publish config must be `an string`',
 }
 
-const PACKAGE_EXAMPLE =
-  '\n' +
-  '  "clean-publish": {\n' +
-  '    "files": ["file1.js", "file2.js"],\n' +
-  '    "packageManager": "yarn"\n' +
-  '  }'
-const FILE_EXAMPLE =
-  '\n' +
-  '  {\n' +
-  '    "files": ["file1.js", "file2.js"],\n' +
-  '    "packageManager": "yarn"\n' +
-  '  }'
+const PACKAGE_EXAMPLE = `\n  "clean-publish": {\n    "files": ["file1.js", "file2.js"],\n    "packageManager": "yarn"\n  }`
+const FILE_EXAMPLE = `\n  {\n    "files": ["file1.js", "file2.js"],\n    "packageManager": "yarn"\n  }`
 
 function isString(value) {
   return typeof value === 'string' && value
 }
 
 function isStrings(value) {
-  if (!Array.isArray(value)) return false
+  if (!Array.isArray(value))
+    return false
   return value.every(isString)
 }
 
 function isStringsOrRegExps(value) {
-  if (!Array.isArray(value)) return false
+  if (!Array.isArray(value))
+    return false
   return value.every(i => isString(i) || i instanceof RegExp)
 }
 
@@ -117,45 +101,40 @@ function configError(config) {
 
 export function getConfig() {
   const explorer = lilconfig('clean-publish', {
-    searchPlaces: ['package.json', '.clean-publish', '.clean-publish.js', '.clean-publish.json']
+    searchPlaces: ['package.json', '.clean-publish', '.clean-publish.js', '.clean-publish.json'],
   })
   return explorer
     .search()
-    .catch(err => {
+    .catch((err) => {
       if (err.name === 'JSONError') {
+        // eslint-disable-next-line regexp/no-super-linear-backtracking
         const regexp = /JSON\s?Error\sin\s[^\n]+:\s+([^\n]+)( while parsing)/
-        let message = err.message
+        let { message } = err
         if (regexp.test(message)) {
           message = message.match(regexp)[1]
         }
         throw new Error(
-          'Can not parse `package.json`. ' +
-            message +
-            '. ' +
-            'Change config according to Clean Publish docs.\n' +
-            PACKAGE_EXAMPLE +
-            '\n'
+          `Can not parse \`package.json\`. ${message
+          }. `
+          + `Change config according to Clean Publish docs.\n${PACKAGE_EXAMPLE
+          }\n`,
         )
-      } else if (err.reason && err.mark && err.mark.name) {
-        const file = relative(process.cwd(), err.mark.name)
-        const position = err.mark.line + ':' + err.mark.column
-        throw new Error(
-          'Can not parse `' +
-            file +
-            '` at ' +
-            position +
-            '. ' +
-            capitalize(err.reason) +
-            '. ' +
-            'Change config according to Clean Publish docs.\n' +
-            FILE_EXAMPLE +
-            '\n'
-        )
-      } else {
-        throw err
       }
+      if (err.reason && err.mark && err.mark.name) {
+        const file = relative(process.cwd(), err.mark.name)
+        const position = `${err.mark.line}:${err.mark.column}`
+        throw new Error(
+          `Can not parse \`${file
+          }\` at ${position
+          }. ${capitalize(err.reason)
+          }. `
+          + `Change config according to Clean Publish docs.\n${FILE_EXAMPLE
+          }\n`,
+        )
+      }
+      throw err
     })
-    .then(result => {
+    .then((result) => {
       if (result === null) {
         return {}
       }
@@ -164,17 +143,18 @@ export function getConfig() {
       if (error) {
         if (/package\.json$/.test(config.filepath)) {
           throw new Error(
-            PACKAGE_ERRORS[error] +
-              '. ' +
-              'Fix it according to Clean Publish docs.' +
-              `\n${PACKAGE_EXAMPLE}\n`
+            `${PACKAGE_ERRORS[error]
+            }. `
+            + `Fix it according to Clean Publish docs.`
+            + `\n${PACKAGE_EXAMPLE}\n`,
           )
-        } else {
+        }
+        else {
           throw new Error(
-            FILE_ERRORS[error] +
-              '. ' +
-              'Fix it according to Clean Publish docs.' +
-              `\n${FILE_EXAMPLE}\n`
+            `${FILE_ERRORS[error]
+            }. `
+            + `Fix it according to Clean Publish docs.`
+            + `\n${FILE_EXAMPLE}\n`,
           )
         }
       }
