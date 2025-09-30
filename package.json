@@ -1,28 +1,28 @@
 {
   "name": "clean-publish",
-  "packageManager": "pnpm@10.17.1",
+  "type": "module",
   "version": "5.2.2",
+  "packageManager": "pnpm@10.17.1",
   "description": "Clean your package before publish",
+  "author": "Shashkov Danil <shashkovdanil@gmail.com>",
+  "license": "MIT",
+  "repository": "shashkovdanil/clean-publish",
   "keywords": [
     "npm",
     "package",
     "publish",
     "clean"
   ],
-  "engines": {
-    "node": ">= 24.0.0"
-  },
-  "author": "Shashkov Danil <shashkovdanil@gmail.com>",
-  "license": "MIT",
-  "repository": "shashkovdanil/clean-publish",
-  "type": "module",
   "types": "types.d.ts",
   "bin": {
     "clean-publish": "clean-publish.js",
     "clear-package-json": "clear-package-json.js"
   },
+  "engines": {
+    "node": ">= 24.0.0"
+  },
   "scripts": {
-    "lint": "eslint *.js test/*.js",
+    "lint": "eslint",
     "schema": "ts-json-schema-generator --path types.d.ts --type Config --no-type-check --out schema.json",
     "clean-publish": "node ./clean-publish.js"
   },
