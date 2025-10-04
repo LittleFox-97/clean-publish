@@ -1,24 +1,24 @@
 {
   "name": "clean-publish",
+  "type": "module",
   "version": "5.2.2",
   "description": "Clean your package before publish",
+  "author": "Shashkov Danil <shashkovdanil@gmail.com>",
+  "license": "MIT",
+  "repository": "shashkovdanil/clean-publish",
   "keywords": [
     "npm",
     "package",
     "publish",
     "clean"
   ],
-  "engines": {
-    "node": ">= 18.0.0"
-  },
-  "author": "Shashkov Danil <shashkovdanil@gmail.com>",
-  "license": "MIT",
-  "repository": "shashkovdanil/clean-publish",
-  "type": "module",
   "types": "types.d.ts",
   "bin": {
     "clean-publish": "clean-publish.js",
     "clear-package-json": "clear-package-json.js"
+  },
+  "engines": {
+    "node": ">= 18.0.0"
   },
   "scripts": {
     "lint": "eslint *.js test/*.js",
@@ -34,10 +34,10 @@
     "micromatch": "^4.0.8"
   },
   "devDependencies": {
-    "@logux/eslint-config": "^55.2.1",
-    "eslint": "^9.27.0",
+    "@antfu/eslint-config": "^5.4.1",
+    "eslint": "^9.37.0",
     "ts-json-schema-generator": "^2.4.0",
-    "tsx": "^4.19.4",
+    "tsx": "^4.20.6",
     "uvu": "^0.5.6"
   }
 }
